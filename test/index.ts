@@ -8,11 +8,8 @@ const state = reactive({
   arr: [1, 2, 3],
 })
 
-const info = computed(() => `name: ${state.name}, age: ${state.age}`)
-
-effect(() => console.log('effect:', state.name))
-effect(() => console.log(`info is <${info.value}>`))
+effect(() => console.log('effect:', state.arr))
 
 console.log()
 
-state.name = 'Vue3' // 数据发生变化后会触发使用了该数据的 effect and computed 重新执行
+state.arr.push(1)

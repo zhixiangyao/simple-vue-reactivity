@@ -142,9 +142,16 @@ export function trigger(target: object, type: TriggerOpTypes, key: unknown, valu
    * 索引会收集 length 的依赖, 数组新增元素后, 其 length 会发生变化, 我们可以通过 length 属性去获取依赖
    */
 
-  if (key !== null) add(depsMap.get(key)) // 对象新增一个属性, 由于没有依赖故不会执行
+  // key !== null 只是避免出现有 null 当 key 的情况
+  if (key !== null) {
+    // 对象新增一个属性, 由于没有依赖故不会执行
+    add(depsMap.get(key))
+  }
 
-  if (type === 'add') add(depsMap.get(Array.isArray(target) ? 'length' : '')) // 处理数组元素的新增
+  if (type === TriggerOpTypes.ADD) {
+    // 处理数组元素的新增
+    add(depsMap.get(Array.isArray(target) ? 'length' : ''))
+  }
 
   effects.forEach(run) // 遍历 effects 并执行
 }

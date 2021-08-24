@@ -1,15 +1,26 @@
-import { isObject, hasOwn, hasChanged } from './shared'
+import { isObject, isArray, hasOwn, hasChanged } from './shared'
 import { reactive } from './reactive'
 import { track, trigger, TrackOpTypes, TriggerOpTypes } from './effect'
 
 const get = createGetter()
 const set = createSetter()
 
+const arrayInstrumentations: string[] = ['push', 'pop', 'shift', 'unshift', 'splice']
+
 function createGetter(isReadonly = false, shallow = false) {
   return function get(target: object, key: string | symbol, receiver: object) {
     const res = Reflect.get(target, key, receiver)
 
-    track(target, TrackOpTypes.GET, key)
+    const targetIsArray = isArray(target)
+
+    if (!isReadonly && targetIsArray && arrayInstrumentations.includes(key as string)) {
+      console.log(`<- 未对数组 ${key as string} 方法做处理 ->`)
+      // return // 这里要判断数据的情况，还没写
+    }
+
+    if (!isReadonly) {
+      track(target, TrackOpTypes.GET, key)
+    }
 
     if (isObject(res)) return reactive(res)
 
