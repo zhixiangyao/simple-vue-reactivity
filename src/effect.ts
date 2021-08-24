@@ -1,48 +1,38 @@
-type Options = { [T in string]: any }
-export interface Effect {
-  (): Effect
-  options: Options
-  id: number
-  deps: Set<Effect>[]
-}
+import type { Options, GlobalTargetKey, Effect } from './type'
 
 export function effect(fn: Function, options: Options = {}): Effect {
   const effect = createReactiveEffect(fn, options) // 返回一个响应式的 effect 函数
 
-  if (!options.lazy) effect() // 如果不是计算属性的effect, 那么会立即执行该effect
+  if (!options.lazy) effect() // 如果不是计算属性的 effect, 那么会立即执行该 effect
 
   return effect
 }
 
+const globalTargetMap: GlobalTargetKey = new WeakMap()
 let uid = 0
-// 存放当前执行的 effect
-let activeEffect: null | Effect = null
-// 如果存在多个 effect , 则依次放入栈中
-const effectStack: Effect[] = []
+let activeEffect: Effect // 存放当前执行的 effect
+const effectStack: Effect[] = [] // 如果存在多个 effect , 则依次放入栈中
 
 /**
  *
- * 如果只有一个 <响应式对象> , 那么我们直接用一个全局的 Map 对象根据不同的 key 进行保存即可,
+ *  如果只有一个 <响应式对象> , 那么我们直接用一个全局的 Map 对象根据不同的 key 进行保存即可,
  * 但是我们的 <响应式对象> 是可以创建多个的, 并且每个 <响应式对象> 的 key 也可能相同,
  * 所以仅仅通过一个 Map 结构以 key 的方式保存是无法实现的.
  *
  * 既然 <响应式对象> 有多个, 那么就可以以整个 <响应式对象> 作为 key 进行区分,
  * 而能够用一个对象作为 key 的数据结构就是 WeakMap.
  *
- * 用一个全局的 WeakMap 结构以 target 作为 key 保存该 target 对象下的 key 对应的依赖:
- * {
- *   targetObj1: {
- *     someKey: [effect1, effect2,..., effectn]
- *   },
- *   targetObj2: {
- *     someKey: [effect1, effect2,..., effectn]
- *   }
- *   ...
- * }
+ * ! 用一个全局的 WeakMap 结构以 target 作为 key 保存该 target 对象下的 key 对应的依赖:
+ * ! {
+ * !   targetObj1: {
+ * !     someKey: [effect1, effect2,..., effectn]
+ * !   },
+ * !   targetObj2: {
+ * !     someKey: [effect1, effect2,..., effectn]
+ * !   }
+ * !   // ...
+ * ! }
  */
-type TargetKey = Map<any, Set<Effect>>
-type GlobalTargetKey = WeakMap<object, TargetKey>
-const globalTargetMap: GlobalTargetKey = new WeakMap()
 
 function createReactiveEffect(fn: Function, options: Options) {
   /**
@@ -56,19 +46,18 @@ function createReactiveEffect(fn: Function, options: Options) {
         // 在取值之前将当前 effect 放到栈顶并标记为 activeEffect
         effectStack.push(effect) // 将自己放到 effectStack 的栈顶
         activeEffect = effect // 同时将自己标记为 activeEffect
+
         return fn() // 执行 effect 的回调就是一个取值的过程
       } finally {
-        // 从 effectStack 栈顶将自己移除
-        effectStack.pop()
-        // 将 effectStack 的栈顶元素标记为 activeEffect
-        activeEffect = effectStack[effectStack.length - 1]
+        effectStack.pop() // 从 effectStack 栈顶将自己移除
+        activeEffect = effectStack[effectStack.length - 1] // 将 effectStack 的栈顶元素标记为 activeEffect
       }
     }
   }
   effect.options = options
   effect.id = uid++
-  // 依赖了哪些属性, 哪些属性变化了需要执行当前 effect
-  effect.deps = []
+  effect.deps = [] // 依赖了哪些属性, 哪些属性变化了需要执行当前 effect
+
   return effect
 }
 
@@ -76,8 +65,7 @@ function createReactiveEffect(fn: Function, options: Options) {
  * 取值的时候开始收集依赖, 即收集 effect
  */
 export function track(target: any, type: string, key: any) {
-  // 收集依赖的时候必须要存在 activeEffect
-  if (!activeEffect) return
+  if (!activeEffect) return // 收集依赖的时候必须要存在 activeEffect
 
   // 根据 target 对象取出当前 target 对应的 depsMap 结构
   let depsMap = globalTargetMap.get(target)
@@ -106,10 +94,9 @@ export function track(target: any, type: string, key: any) {
 export function trigger(target: any, type: string, key: any, value?: any) {
   const depsMap = globalTargetMap.get(target) // 获取当前 target 对应的 Map
 
+  // 如果该对象没有收集依赖
   if (!depsMap) {
-    // 如果该对象没有收集依赖
-
-    // console.log('该对象还未收集依赖') // 比如修改值的时候, 没有调用过 effect
+    console.log('该对象还未收集依赖') // 比如修改值的时候, 没有调用过 effect
     return
   }
 
@@ -121,11 +108,9 @@ export function trigger(target: any, type: string, key: any, value?: any) {
   }
   const run = (effect: Effect) => {
     if (effect.options?.scheduler) {
-      // 如果是计算属性的 effect 则执行其 scheduler() 方法
-      effect.options?.scheduler()
+      effect.options?.scheduler() // 如果是计算属性的 effect 则执行其 scheduler() 方法
     } else {
-      // 如果是普通的 effect 则立即执行 effect 方法
-      effect()
+      effect() // 如果是普通的 effect 则立即执行 effect 方法
     }
   }
 
@@ -140,11 +125,7 @@ export function trigger(target: any, type: string, key: any, value?: any) {
 
   if (key !== null) add(depsMap.get(key)) // 对象新增一个属性, 由于没有依赖故不会执行
 
-  if (type === 'add') {
-    // 处理数组元素的新增
-    add(depsMap.get(Array.isArray(target) ? 'length' : ''))
-  }
+  if (type === 'add') add(depsMap.get(Array.isArray(target) ? 'length' : '')) // 处理数组元素的新增
 
-  // 遍历 effects 并执行
-  effects.forEach(run)
+  effects.forEach(run) // 遍历 effects 并执行
 }
