@@ -1,5 +1,11 @@
 export type Options = { [T in string]: any }
 
+export type Dep = Set<ReactiveEffect>
+
+export type TargetKey = Map<any, Dep>
+
+export type GlobalTargetKey = WeakMap<object, TargetKey>
+
 export const enum TrackOpTypes {
   GET = 'get',
   HAS = 'has',
@@ -20,9 +26,6 @@ export function effect<T = any>(fn: () => T, options: Options = {}): ReactiveEff
 
   return effect
 }
-
-export type TargetKey = Map<any, Set<ReactiveEffect>>
-export type GlobalTargetKey = WeakMap<object, TargetKey>
 
 const globalTargetMap: GlobalTargetKey = new WeakMap()
 
@@ -53,7 +56,7 @@ const effectStack: ReactiveEffect[] = [] // 如果存在多个 effect , 则依�
 
 export class ReactiveEffect<T = any> {
   public id: number = uid++
-  public deps: Set<ReactiveEffect>[] = []
+  public deps: Dep[] = []
 
   constructor(public fn: () => T, public options: Options) {}
 
@@ -90,7 +93,7 @@ export function track(target: object, type: TrackOpTypes, key: unknown) {
   if (!depsMap) globalTargetMap.set(target, (depsMap = new Map()))
 
   // 根据 key 取出对应的用于存储依赖的 Set 集合
-  let dep: Set<ReactiveEffect> | undefined = depsMap.get(key)
+  let dep: Dep | undefined = depsMap.get(key)
 
   // 第一次可能不存在, 要创建一下 Set
   if (!dep) depsMap.set(key, (dep = new Set()))
@@ -114,9 +117,9 @@ export function trigger(target: object, type: TriggerOpTypes, key: unknown, valu
     return
   }
 
-  const effects: Set<ReactiveEffect> = new Set() // 存储依赖的 effect
+  const effects: Dep = new Set() // 存储依赖的 effect
 
-  const add = (effectsToAdd: Set<ReactiveEffect> | undefined) => {
+  const add = (effectsToAdd: Dep | undefined) => {
     if (!effectsToAdd) return
 
     effectsToAdd.forEach(effect => effects.add(effect))

@@ -6,7 +6,7 @@ const get = createGetter()
 const set = createSetter()
 
 function createGetter(isReadonly = false, shallow = false) {
-  return function get(target: any, key: any, receiver: any) {
+  return function get(target: object, key: string | symbol, receiver: object) {
     const res = Reflect.get(target, key, receiver)
 
     track(target, TrackOpTypes.GET, key)
@@ -18,9 +18,9 @@ function createGetter(isReadonly = false, shallow = false) {
 }
 
 function createSetter(shallow = false) {
-  return function set(target: any, key: any, value: any, receiver: any) {
+  return function set(target: object, key: string | symbol, value: unknown, receiver: object) {
     const hadKey = hasOwn(target, key)
-    const oldValue = target?.[key]
+    const oldValue = (target as any)?.[key]
 
     const res = Reflect.set(target, key, value, receiver)
 
