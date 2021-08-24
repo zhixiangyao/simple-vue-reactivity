@@ -44,10 +44,10 @@ function createReactiveEffect(fn: Function, options: Options) {
     if (!effectStack.includes(effect)) {
       try {
         // 在取值之前将当前 effect 放到栈顶并标记为 activeEffect
-        effectStack.push(effect) // 将自己放到 effectStack 的栈顶
-        activeEffect = effect // 同时将自己标记为 activeEffect
+        effectStack.push(effect)
+        activeEffect = effect
 
-        return fn() // 执行 effect 的回调就是一个取值的过程
+        return fn() // 执行 effect 的回调就是一个取值 (track) 的过程
       } finally {
         effectStack.pop() // 从 effectStack 栈顶将自己移除
         activeEffect = effectStack[effectStack.length - 1] // 将 effectStack 的栈顶元素标记为 activeEffect
@@ -62,7 +62,7 @@ function createReactiveEffect(fn: Function, options: Options) {
 }
 
 /**
- * 取值的时候开始收集依赖, 即收集 effect
+ * 收集依赖 effect
  */
 export function track(target: any, type: string, key: any) {
   if (!activeEffect) return // 收集依赖的时候必须要存在 activeEffect
@@ -79,33 +79,33 @@ export function track(target: any, type: string, key: any) {
   // 第一次可能不存在
   if (!dep) depsMap.set(key, (dep = new Set()))
 
-  // 如果依赖集合中不存在 activeEffect
+  // 只收集第一次 (也就是如果依赖集合中不存在 activeEffect)
   if (!dep.has(activeEffect)) {
-    // 将当前 effect 放到依赖集合中
-    dep.add(activeEffect)
-    // 一个 effect 可能使用到了多个 key , 所以会有多个 dep 依赖集合
-    activeEffect.deps.push(dep) // 让当前 effect 也保存一份 dep 依赖集合
+    dep.add(activeEffect) // 一个 key 可能使用到了多个 effect , 所以将当前 effect 放到依赖集合中
+    activeEffect.deps.push(dep) // 一个 effect 可能使用到了多个 key , 所以将当前 key 放到依赖集合中
   }
 }
 
 /**
- * 数据发生变化的时候, 触发依赖的 effect 执行
+ * 触发依赖 effect 执行
  */
 export function trigger(target: any, type: string, key: any, value?: any) {
-  const depsMap = globalTargetMap.get(target) // 获取当前 target 对应的 Map
+  const depsMap = globalTargetMap.get(target) // 根据 target 对象取出当前 target 对应的 depsMap 结构
 
   // 如果该对象没有收集依赖
   if (!depsMap) {
-    console.log('该对象还未收集依赖') // 比如修改值的时候, 没有调用过 effect
+    console.log('该对象还未收集依赖')
     return
   }
 
   const effects: Set<Effect> = new Set() // 存储依赖的 effect
+
   const add = (effectsToAdd: Set<Effect> | undefined) => {
     if (!effectsToAdd) return
 
     effectsToAdd.forEach(effect => effects.add(effect))
   }
+
   const run = (effect: Effect) => {
     if (effect.options?.scheduler) {
       effect.options?.scheduler() // 如果是计算属性的 effect 则执行其 scheduler() 方法
