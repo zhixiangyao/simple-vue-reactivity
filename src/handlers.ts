@@ -1,6 +1,6 @@
 import { isObject, hasOwn, hasChanged } from './shared'
 import { reactive } from './reactive'
-import { track, trigger, TriggerOpTypes } from './effect'
+import { track, trigger, TrackOpTypes, TriggerOpTypes } from './effect'
 
 const get = createGetter()
 const set = createSetter()
@@ -9,7 +9,7 @@ function createGetter(isReadonly = false, shallow = false) {
   return function get(target: any, key: any, receiver: any) {
     const res = Reflect.get(target, key, receiver)
 
-    track(target, key)
+    track(target, TrackOpTypes.GET, key)
 
     if (isObject(res)) return reactive(res)
 

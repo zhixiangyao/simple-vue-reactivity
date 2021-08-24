@@ -1,5 +1,11 @@
 export type Options = { [T in string]: any }
 
+export const enum TrackOpTypes {
+  GET = 'get',
+  HAS = 'has',
+  ITERATE = 'iterate',
+}
+
 export const enum TriggerOpTypes {
   SET = 'set',
   ADD = 'add',
@@ -74,7 +80,7 @@ export class ReactiveEffect<T = any> {
  * 收集依赖 effect
  * 只收集第一次
  */
-export function track(target: object, key: unknown) {
+export function track(target: object, type: TrackOpTypes, key: unknown) {
   if (!activeEffect) return // 收集依赖的时候必须要存在 activeEffect
 
   // 根据 target 对象取出当前 target 对应的 depsMap 结构

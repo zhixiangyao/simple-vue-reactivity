@@ -1,5 +1,5 @@
 import { isFunction } from './shared'
-import { effect, track, trigger, TriggerOpTypes } from './effect'
+import { effect, track, trigger, TrackOpTypes, TriggerOpTypes } from './effect'
 import type { ReactiveEffect } from './effect'
 
 type FunOption = () => any
@@ -42,7 +42,7 @@ export function computed(option: FunOption | ObjOption) {
       if (dirty) {
         value = runner.run() // 等到取值的时候再执行计算属性内部创建的 effect
         dirty = false // 取完值后数据就不是脏的了
-        track(c, 'value') // 对计算属性对象收集 value 属性
+        track(c, TrackOpTypes.GET, 'value') // 对计算属性对象收集 value 属性
       }
       return value
     },
