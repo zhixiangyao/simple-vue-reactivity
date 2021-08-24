@@ -1,0 +1,8 @@
+# Ignore artifacts:
+build
+dist
+build
+coverage
+package-lock.json
+tsconfig.json
+pnpm-lock.yaml
