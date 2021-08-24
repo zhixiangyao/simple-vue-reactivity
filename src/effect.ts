@@ -1,4 +1,8 @@
-export type Options = { [T in string]: any }
+export type Options = {
+  lazy?: boolean
+  computed?: boolean
+  scheduler?: () => any
+}
 
 export type Dep = Set<ReactiveEffect>
 

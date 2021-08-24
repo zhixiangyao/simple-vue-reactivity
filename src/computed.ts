@@ -26,10 +26,9 @@ export function computed(option: FunOption | ObjOption) {
     lazy: true, // 默认是非立即执行, 等到取值的时候再执行
     computed: true, // 标识这个 effect 是计算属性的 effect
     scheduler: () => {
-      // 数据发生变化的时候不是直接执行当前 effect, 而是执行这个 scheduler 弄脏数据
+      // 如果数据是干净的
       if (!dirty) {
-        // 如果数据是干净的
-        dirty = true // 弄脏数据
+        dirty = true
         trigger(c, TriggerOpTypes.SET, 'value') // 数据变化后, 触发 value 依赖
       }
     },
@@ -41,7 +40,7 @@ export function computed(option: FunOption | ObjOption) {
     get value() {
       if (dirty) {
         value = runner.run() // 等到取值的时候再执行计算属性内部创建的 effect
-        dirty = false // 取完值后数据就不是脏的了
+        dirty = false // 取完值后数据就不是脏的了(如果没有 trigger 就永远不是脏数据)
         track(c, TrackOpTypes.GET, 'value') // 对计算属性对象收集 value 属性
       }
       return value

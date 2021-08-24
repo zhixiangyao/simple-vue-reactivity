@@ -8,7 +8,7 @@ const state = reactive({
   arr: [1, 2, 3],
 })
 
-effect(() => console.log('effect:', state.arr))
+effect(() => console.log('effect:', state.arr), {})
 
 console.log()
 
