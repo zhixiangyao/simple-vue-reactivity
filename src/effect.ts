@@ -1,17 +1,28 @@
-import type { Options, GlobalTargetKey, Effect } from './type'
+export type Options = { [T in string]: any }
 
-export function effect(fn: Function, options: Options = {}): Effect {
-  const effect = createReactiveEffect(fn, options) // 返回一个响应式的 effect 函数
+export const enum TriggerOpTypes {
+  SET = 'set',
+  ADD = 'add',
+  DELETE = 'delete',
+  CLEAR = 'clear',
+}
 
-  if (!options.lazy) effect() // 如果不是计算属性的 effect, 那么会立即执行该 effect
+export function effect<T = any>(fn: () => T, options: Options = {}): ReactiveEffect {
+  const effect = new ReactiveEffect(fn, options) // 返回一个响应式的 effect 函数
+
+  if (!options || !options.lazy) effect.run() // 如果不是计算属性的 effect, 那么会立即执行该 effect
 
   return effect
 }
 
+export type TargetKey = Map<any, Set<ReactiveEffect>>
+export type GlobalTargetKey = WeakMap<object, TargetKey>
+
 const globalTargetMap: GlobalTargetKey = new WeakMap()
+
 let uid = 0
-let activeEffect: Effect // 存放当前执行的 effect
-const effectStack: Effect[] = [] // 如果存在多个 effect , 则依次放入栈中
+let activeEffect: ReactiveEffect | undefined // 存放当前执行的 effect
+const effectStack: ReactiveEffect[] = [] // 如果存在多个 effect , 则依次放入栈中
 
 /**
  *
@@ -34,37 +45,36 @@ const effectStack: Effect[] = [] // 如果存在多个 effect , 则依次放入�
  * ! }
  */
 
-function createReactiveEffect(fn: Function, options: Options) {
-  /**
-   * 所谓响应式的 effect , 就是该 effect 在执行的时候会将自己放入到 effectStack 收到栈顶,
-   * 同时将自己标记为 activeEffect, 以便进行依赖收集与 reactive 进行关联
-   */
-  const effect: Effect = function () {
-    // 防止不停的更改属性导致死循环
-    if (!effectStack.includes(effect)) {
-      try {
-        // 在取值之前将当前 effect 放到栈顶并标记为 activeEffect
-        effectStack.push(effect)
-        activeEffect = effect
+export class ReactiveEffect<T = any> {
+  public id: number = uid++
+  public deps: Set<ReactiveEffect>[] = []
 
-        return fn() // 执行 effect 的回调就是一个取值 (track) 的过程
+  constructor(public fn: () => T, public options: Options) {}
+
+  public run() {
+    // 防止不停的更改属性导致死循环
+    if (!effectStack.includes(this)) {
+      try {
+        // 在取值之前将 activeEffect 标记一下
+        // 并放到栈顶
+        effectStack.push((activeEffect = this))
+
+        return this.fn() // 执行 effect 的回调就是一个取值 (track) 的过程
       } finally {
         effectStack.pop() // 从 effectStack 栈顶将自己移除
-        activeEffect = effectStack[effectStack.length - 1] // 将 effectStack 的栈顶元素标记为 activeEffect
+
+        const n = effectStack.length
+        activeEffect = n > 0 ? effectStack[n - 1] : undefined // 将 effectStack 的栈顶元素标记为 activeEffect
       }
     }
   }
-  effect.options = options
-  effect.id = uid++
-  effect.deps = [] // 依赖了哪些属性, 哪些属性变化了需要执行当前 effect
-
-  return effect
 }
 
 /**
  * 收集依赖 effect
+ * 只收集第一次
  */
-export function track(target: any, type: string, key: any) {
+export function track(target: object, key: unknown) {
   if (!activeEffect) return // 收集依赖的时候必须要存在 activeEffect
 
   // 根据 target 对象取出当前 target 对应的 depsMap 结构
@@ -74,9 +84,9 @@ export function track(target: any, type: string, key: any) {
   if (!depsMap) globalTargetMap.set(target, (depsMap = new Map()))
 
   // 根据 key 取出对应的用于存储依赖的 Set 集合
-  let dep: Set<Effect> | undefined = depsMap.get(key)
+  let dep: Set<ReactiveEffect> | undefined = depsMap.get(key)
 
-  // 第一次可能不存在
+  // 第一次可能不存在, 要创建一下 Set
   if (!dep) depsMap.set(key, (dep = new Set()))
 
   // 只收集第一次 (也就是如果依赖集合中不存在 activeEffect)
@@ -89,7 +99,7 @@ export function track(target: any, type: string, key: any) {
 /**
  * 触发依赖 effect 执行
  */
-export function trigger(target: any, type: string, key: any, value?: any) {
+export function trigger(target: object, type: TriggerOpTypes, key: unknown, value?: unknown) {
   const depsMap = globalTargetMap.get(target) // 根据 target 对象取出当前 target 对应的 depsMap 结构
 
   // 如果该对象没有收集依赖
@@ -98,19 +108,19 @@ export function trigger(target: any, type: string, key: any, value?: any) {
     return
   }
 
-  const effects: Set<Effect> = new Set() // 存储依赖的 effect
+  const effects: Set<ReactiveEffect> = new Set() // 存储依赖的 effect
 
-  const add = (effectsToAdd: Set<Effect> | undefined) => {
+  const add = (effectsToAdd: Set<ReactiveEffect> | undefined) => {
     if (!effectsToAdd) return
 
     effectsToAdd.forEach(effect => effects.add(effect))
   }
 
-  const run = (effect: Effect) => {
+  const run = (effect: ReactiveEffect) => {
     if (effect.options?.scheduler) {
       effect.options?.scheduler() // 如果是计算属性的 effect 则执行其 scheduler() 方法
     } else {
-      effect() // 如果是普通的 effect 则立即执行 effect 方法
+      effect.run() // 如果是普通的 effect 则立即执行 effect 方法
     }
   }
 

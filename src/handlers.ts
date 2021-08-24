@@ -1,6 +1,6 @@
 import { isObject, hasOwn, hasChanged } from './shared'
 import { reactive } from './reactive'
-import { track, trigger } from './effect'
+import { track, trigger, TriggerOpTypes } from './effect'
 
 const get = createGetter()
 const set = createSetter()
@@ -9,7 +9,7 @@ function createGetter(isReadonly = false, shallow = false) {
   return function get(target: any, key: any, receiver: any) {
     const res = Reflect.get(target, key, receiver)
 
-    track(target, 'get', key)
+    track(target, key)
 
     if (isObject(res)) return reactive(res)
 
@@ -26,10 +26,10 @@ function createSetter(shallow = false) {
 
     if (!hadKey) {
       // 没有 Key 是新增
-      trigger(target, 'add', key, value)
+      trigger(target, TriggerOpTypes.ADD, key, value)
     } else if (hasChanged(value, oldValue)) {
       // 有 Changed 是修改
-      trigger(target, 'set', key, value)
+      trigger(target, TriggerOpTypes.SET, key, value)
     } else {
       // 不变
     }
