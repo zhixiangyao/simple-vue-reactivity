@@ -15,7 +15,7 @@ function createGetter(isReadonly = false, shallow = false) {
 
     if (!isReadonly && targetIsArray && arrayInstrumentations.includes(key as string)) {
       console.log(`<- 未对数组 ${key as string} 方法做处理 ->`)
-      // return // 这里要判断数据的情况，还没写
+      // return // 这里要判断数据的情况，还没写 < 未完成❎ >
     }
 
     if (!isReadonly) {
