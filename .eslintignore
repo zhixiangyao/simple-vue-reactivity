@@ -1,14 +1,17 @@
-*.sh
 node_modules
+dist
+build
+public
+bin
+
+*.sh
 *.md
 *.woff
 *.ttf
+Dockerfile
+
+# Editor directories and files
 .vscode
 .idea
-dist
-build
-/public
 .husky
 .local
-/bin
-Dockerfile
