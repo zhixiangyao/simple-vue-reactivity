@@ -1,11 +1,10 @@
-# Ignore artifacts:
-build
 dist
 build
-coverage
+node_modules
+.husky
 
 package-lock.json
 pnpm-lock.yaml
 tsconfig.json
-
-.husky
+**/*.svg
+**/*.sh

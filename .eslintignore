@@ -10,7 +10,6 @@ bin
 *.ttf
 Dockerfile
 
-# Editor directories and files
 .vscode
 .idea
 .husky
