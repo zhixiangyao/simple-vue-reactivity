@@ -1,4 +1,4 @@
-import { clearTerminal, reactive, effect, computed } from '../src'
+import { clearTerminal, reactive, effect } from '../src'
 
 clearTerminal()
 
