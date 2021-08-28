@@ -8,8 +8,10 @@ const state = reactive({
   arr: [1, 2, 3],
 })
 
-effect(() => console.log('effect:', state.arr), {})
+effect(() => console.log('effect:', state.name), {})
 
-console.log()
+state.name = 'Vue3'
 
-state.arr.push(1)
+Reflect.deleteProperty(state, 'name')
+
+state.name = 'VueNext'

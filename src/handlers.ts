@@ -1,9 +1,11 @@
 import { isObject, isArray, hasOwn, hasChanged } from './shared'
 import { reactive } from './reactive'
-import { track, trigger, TrackOpTypes, TriggerOpTypes } from './effect'
+import { track, trigger, TrackOpTypes, TriggerOpTypes, globalTargetMap } from './effect'
+import type { Dep } from './effect'
 
 const get = createGetter()
 const set = createSetter()
+const deleteProperty = createDeleteProperty()
 
 const arrayInstrumentations: string[] = ['push', 'pop', 'shift', 'unshift', 'splice']
 
@@ -49,10 +51,35 @@ function createSetter(shallow = false) {
   }
 }
 
+function createDeleteProperty() {
+  return function set(target: object, key: string | symbol) {
+    const res = Reflect.deleteProperty(target, key)
+
+    // 根据 target 对象取出当前 target 对应的 depsMap 结构
+    const depsMap = globalTargetMap.get(target)
+
+    if (depsMap) {
+      depsMap.forEach(dep => {
+        // 清除依赖
+        dep.forEach(activeEffect => {
+          const newDeps: Dep[] = []
+          activeEffect.deps.forEach(effectDep => {
+            if (effectDep !== dep) newDeps.push(effectDep)
+          })
+          activeEffect.deps = newDeps
+        })
+      })
+      globalTargetMap.delete(target)
+    }
+
+    return res
+  }
+}
+
 export const mutableHandlers = {
   get,
   set,
-  // deleteProperty,
+  deleteProperty,
   // has,
   // ownKeys
 }
@@ -60,7 +87,7 @@ export const mutableHandlers = {
 export const mutableCollectionHandlers = {
   get,
   set,
-  // deleteProperty,
+  deleteProperty,
   // has,
   // ownKeys
 }

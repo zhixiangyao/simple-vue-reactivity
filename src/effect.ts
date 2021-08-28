@@ -31,7 +31,7 @@ export function effect<T = any>(fn: () => T, options: Options = {}): ReactiveEff
   return effect
 }
 
-const globalTargetMap: GlobalTargetKey = new WeakMap()
+export const globalTargetMap: GlobalTargetKey = new WeakMap()
 
 let uid = 0
 let activeEffect: ReactiveEffect | undefined // 存放当前执行的 effect
