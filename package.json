@@ -15,7 +15,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhixiangyao/simple-vue-reactivit.git"
+    "url": "git+https://github.com/zhixiangyao/simple-vue-reactivity.git"
   },
   "homepage": "https://github.com/zhixiangyao/simple-vue-reactivity#simple-vue-reactivity",
   "scripts": {
