@@ -1,6 +1,6 @@
 {
   "name": "@zhixiangyao/reactivity",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "simple vue reactivity",
   "main": "index.js",
   "module": "dist/esm/index.js",

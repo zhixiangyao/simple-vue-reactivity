@@ -1,5 +1,3 @@
-import readline from 'readline'
-
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
 export const hasOwn = (val: object, key: string | symbol): key is keyof typeof val => hasOwnProperty.call(val, key)
@@ -29,9 +27,3 @@ export const hasChanged = (newValue: any, oldValue: any): boolean => newValue !=
 export const objectToString = Object.prototype.toString
 
 export const toTypeString = (value: unknown): string => objectToString.call(value)
-
-export const clearTerminal = () => {
-  readline.cursorTo(process.stdout, 0, 0)
-  readline.clearLine(process.stdout, 0)
-  readline.clearScreenDown(process.stdout)
-}
