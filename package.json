@@ -21,6 +21,8 @@
   "scripts": {
     "dev": "nodemon --config nodemon.json",
     "build": "zx ./scripts/build.mjs",
+    "lint:eslint": "eslint \"src/**/*.ts\" --fix",
+    "lint:prettier": "prettier --write .",
     "prepare": "husky install",
     "lint-staged": "lint-staged"
   },
