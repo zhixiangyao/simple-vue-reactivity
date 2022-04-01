@@ -66,18 +66,22 @@ export class ReactiveEffect<T = any> {
 
   public run() {
     // 防止不停的更改属性导致死循环
+    // 如果没有才 push 到 effectStack
     if (!effectStack.includes(this)) {
       try {
         // 在取值之前将 activeEffect 标记一下
         // 并放到栈顶
         effectStack.push((activeEffect = this))
 
-        return this.fn() // 执行 effect 的回调就是一个取值 (track) 的过程
+        // 执行 effect 的回调就是一个取值 (track) 的过程
+        return this.fn()
       } finally {
-        effectStack.pop() // 从 effectStack 栈顶将自己移除
+        // 从 effectStack 栈顶将自己移除
+        effectStack.pop()
 
         const n = effectStack.length
-        activeEffect = n > 0 ? effectStack[n - 1] : undefined // 将 effectStack 的栈顶元素标记为 activeEffect
+        // 将 effectStack 的栈顶元素标记为 activeEffect
+        activeEffect = n > 0 ? effectStack[n - 1] : undefined
       }
     }
   }
@@ -88,24 +92,26 @@ export class ReactiveEffect<T = any> {
  * 只收集第一次
  */
 export function track(target: object, type: TrackOpTypes, key: unknown) {
-  if (!activeEffect) return // 收集依赖的时候必须要存在 activeEffect
+  // 收集依赖的时候必须要存在 activeEffect
+  // 在 ReactiveEffect 里有个 activeEffect = this 的操作时就有值了
+  if (!activeEffect) return
 
   // 根据 target 对象取出当前 target 对应的 depsMap 结构
   let depsMap = globalTargetMap.get(target)
-
   // 第一次收集依赖可能不存在
   if (!depsMap) globalTargetMap.set(target, (depsMap = new Map()))
 
   // 根据 key 取出对应的用于存储依赖的 Set 集合
   let dep: Dep | undefined = depsMap.get(key)
-
   // 第一次可能不存在, 要创建一下 Set
   if (!dep) depsMap.set(key, (dep = new Set()))
 
   // 只收集第一次 (也就是如果依赖集合中不存在 activeEffect)
   if (!dep.has(activeEffect)) {
-    dep.add(activeEffect) // 一个 key 可能使用到了多个 effect , 所以将当前 effect 放到依赖集合中
-    activeEffect.deps.push(dep) // 一个 effect 可能使用到了多个 key , 所以将当前 key 放到依赖集合中
+    // 一个 key 可能使用到了多个 effect , 所以将当前 effect 放到依赖集合中
+    dep.add(activeEffect)
+    // 一个 effect 可能使用到了多个 key , 所以将当前 key 放到依赖集合中
+    activeEffect.deps.push(dep)
   }
 }
 
