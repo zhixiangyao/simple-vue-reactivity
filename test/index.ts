@@ -1,4 +1,4 @@
-import { reactive, effect } from '../src/index'
+import { reactive, effect } from '@zhixiangyao/reactivity'
 import { clearTerminal } from './utils'
 
 clearTerminal()

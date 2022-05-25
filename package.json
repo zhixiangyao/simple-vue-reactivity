@@ -1,10 +1,23 @@
 {
   "name": "@zhixiangyao/reactivity",
-  "version": "0.1.9",
+  "author": "zhixiangyao",
+  "license": "MIT",
+  "version": "0.1.15",
   "description": "simple vue reactivity",
   "main": "index.js",
-  "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
   "files": [
     "index.js",
     "dist"
@@ -12,8 +25,6 @@
   "keywords": [
     "reactivity"
   ],
-  "author": "zhixiangyao",
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zhixiangyao/simple-vue-reactivity.git"
@@ -21,6 +32,7 @@
   "homepage": "https://github.com/zhixiangyao/simple-vue-reactivity#simple-vue-reactivity",
   "scripts": {
     "dev": "nodemon --config nodemon.json",
+    "publish": "zx ./scripts/publish.mjs",
     "build": "zx ./scripts/build.mjs",
     "lint:eslint": "eslint \"src/**/*.ts\" --fix",
     "lint:prettier": "prettier --write .",
@@ -50,5 +62,11 @@
     "ts-node": "^10.8.0",
     "typescript": "^4.7.2",
     "zx": "^6.1.0"
+  },
+  "dependencies": {
+    "@zhixiangyao/reactivity": "^0.1.15"
+  },
+  "engines": {
+    "node": ">=14.6.0"
   }
 }
