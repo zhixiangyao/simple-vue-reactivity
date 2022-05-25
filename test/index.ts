@@ -1,4 +1,4 @@
-import { reactive, effect } from '../src'
+import { reactive, effect } from '../src/index'
 import { clearTerminal } from './utils'
 
 clearTerminal()

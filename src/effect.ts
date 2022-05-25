@@ -71,7 +71,8 @@ export class ReactiveEffect<T = any> {
       try {
         // 在取值之前将 activeEffect 标记一下
         // 并放到栈顶
-        effectStack.push((activeEffect = this))
+        effectStack.push(this)
+        activeEffect = effectStack[effectStack.length - 1]
 
         // 执行 effect 的回调就是一个取值 (track) 的过程
         return this.fn()
